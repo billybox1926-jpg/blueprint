@@ -1,43 +1,66 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useReducedMotion, useScramble } from "../lib/hooks";
-import { DEFAULT_CONFIG, renderProject } from "../lib/templates";
 import { ReplayIcon } from "./ui";
 
-/* ---------------- terminal script ---------------- */
+/* ---------------- terminal script — replays the shipped CLI ---------------- */
 
-type TermKind = "cmd" | "info" | "ok" | "dim" | "file" | "done" | "hint";
+type TermKind = "cmd" | "info" | "ok" | "gap" | "done" | "hint";
 interface TermLine {
   kind: TermKind;
   a: string;
   b?: string;
 }
 
-function buildScript(): TermLine[] {
-  const files = renderProject(DEFAULT_CONFIG);
-  return [
-    { kind: "cmd", a: "python blueprint.py new local-drift" },
-    { kind: "info", a: "blueprint v0.1.0 — BillyBox project scaffolder" },
-    { kind: "ok", a: "project name", b: "local-drift" },
-    { kind: "ok", a: "module", b: "local_drift" },
-    { kind: "ok", a: "description", b: "Local config drift detector" },
-    { kind: "ok", a: "author", b: "Billy Box" },
-    { kind: "ok", a: "license", b: "MIT" },
-    { kind: "dim", a: `rendering ${files.length} embedded templates …` },
-    ...files.map((f) => ({ kind: "file" as const, a: f.path })),
-    {
-      kind: "done",
-      a: `${files.length} files · 0 deps · rendered in 0.38 s`,
-    },
-    { kind: "hint", a: "next → cd local-drift && git init && bb init" },
-  ];
-}
+const SCRIPT: TermLine[] = [
+  { kind: "cmd", a: "blueprint --version" },
+  { kind: "info", a: "blueprint 0.1.0" },
+  { kind: "gap", a: "" },
+  { kind: "cmd", a: "blueprint new local-drift" },
+  { kind: "info", a: "BillyBox Project Scaffolder" },
+  { kind: "info", a: "==================================================" },
+  { kind: "gap", a: "" },
+  { kind: "ok", a: "package name", b: "local_drift" },
+  { kind: "ok", a: "description", b: "Local config drift detector" },
+  { kind: "ok", a: "author", b: "Billy Box" },
+  { kind: "gap", a: "" },
+  { kind: "info", a: "Available licenses:" },
+  { kind: "info", a: "  1. MIT" },
+  { kind: "info", a: "  2. Apache-2.0" },
+  { kind: "info", a: "  3. None" },
+  { kind: "ok", a: "choose license [1]", b: "1" },
+  { kind: "gap", a: "" },
+  { kind: "done", a: "Created project 'local-drift' in local-drift" },
+  { kind: "info", a: "  15 files generated" },
+  { kind: "gap", a: "" },
+  { kind: "info", a: "Next steps:" },
+  { kind: "info", a: "  cd local-drift" },
+  { kind: "info", a: "  git init" },
+  { kind: "info", a: "  pip install -e ." },
+  { kind: "info", a: "  pre-commit install" },
+  { kind: "hint", a: "then hand off to the suite → bb init" },
+];
+
+const KIND_MS: Record<TermKind, number> = {
+  cmd: 520,
+  info: 118,
+  ok: 215,
+  gap: 235,
+  done: 430,
+  hint: 300,
+};
 
 function Terminal() {
   const reduced = useReducedMotion();
-  const script = useMemo(buildScript, []);
+  const script = SCRIPT;
   const [replay, setReplay] = useState(0);
   const [shown, setShown] = useState(reduced ? script.length : 0);
   const [typed, setTyped] = useState(reduced ? script[0].a.length : 0);
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (el) el.scrollTop = el.scrollHeight;
+  }, [shown]);
 
   useEffect(() => {
     if (reduced) {
@@ -62,8 +85,7 @@ function Terminal() {
     }
     let t = 450 + cmd.length * 34 + 380;
     for (let i = 1; i < script.length; i += 1) {
-      const k = script[i].kind;
-      t += k === "file" ? 62 : k === "info" ? 260 : k === "done" ? 380 : 165;
+      t += KIND_MS[script[i].kind];
       const idx = i;
       at(t, () => setShown(idx + 1));
     }
@@ -83,13 +105,14 @@ function Terminal() {
           <span className="h-2.5 w-2.5 bg-warn/80" />
           <span className="h-2.5 w-2.5 bg-ok/80" />
           <span className="ml-3 truncate font-mono text-[11px] text-faint">
-            billybox@bb — ~/work · blueprint
+            billybox@bb — ~/work · blueprint v0.1.0
           </span>
-          <span className="ml-auto border border-line px-1.5 py-px font-mono text-[10px] text-mist">
-            bash
+          <span className="ml-auto border border-ok/40 bg-ok/10 px-1.5 py-px font-mono text-[10px] text-ok">
+            shipped
           </span>
         </div>
         <div
+          ref={scrollRef}
           className="code-scroll max-h-[430px] min-h-[380px] overflow-auto px-4 py-4 font-mono text-[12.5px] leading-[1.8] sm:px-5"
           aria-live="polite"
         >
@@ -106,9 +129,11 @@ function Terminal() {
               );
             }
             if (shown <= i) return null;
+            if (ln.kind === "gap")
+              return <div key={i} className="h-2.5" aria-hidden />;
             if (ln.kind === "info")
               return (
-                <div key={i} className="line-in text-faint">
+                <div key={i} className="line-in whitespace-pre text-faint">
                   {ln.a}
                 </div>
               );
@@ -116,21 +141,8 @@ function Terminal() {
               return (
                 <div key={i} className="line-in flex gap-2">
                   <span className="text-ok select-none">✔</span>
-                  <span className="w-28 shrink-0 text-faint">{ln.a}</span>
+                  <span className="w-36 shrink-0 text-faint">{ln.a}</span>
                   <span className="text-chalk">{ln.b}</span>
-                </div>
-              );
-            if (ln.kind === "dim")
-              return (
-                <div key={i} className="line-in pt-1 text-faint">
-                  … {ln.a}
-                </div>
-              );
-            if (ln.kind === "file")
-              return (
-                <div key={i} className="line-in flex gap-2 pl-3">
-                  <span className="w-12 shrink-0 text-ok/90 select-none">write</span>
-                  <span className="text-chalk/85">{ln.a}</span>
                 </div>
               );
             if (ln.kind === "done")
@@ -163,8 +175,8 @@ function Terminal() {
           replay run
         </button>
         <p className="font-mono text-[11px] text-faint">
-          the run above renders the <span className="text-mist">same embedded templates</span> the
-          CLI ships — try them yourself below
+          that's the shipped v0.1.0 flow — the lab below renders its{" "}
+          <span className="text-mist">actual templates</span>
         </p>
       </div>
     </div>
@@ -210,16 +222,16 @@ export function Hero() {
             >
               {title || "\u00A0"}
             </h1>
-            {/* queued stamp */}
+            {/* shipped stamp */}
             <div
-              className={`stamp-in absolute -top-3 right-0 rotate-[-8deg] border-2 border-warn/80 px-3 py-1.5 text-center sm:-right-2 ${mounted ? "" : "opacity-0"}`}
+              className={`stamp-in absolute -top-3 right-0 rotate-[-8deg] border-2 border-ok/80 px-3 py-1.5 text-center sm:-right-2 ${mounted ? "" : "opacity-0"}`}
               style={{ animationDelay: "1s" }}
             >
-              <div className="font-display text-lg leading-none font-bold tracking-[0.18em] text-warn uppercase">
-                Queued
+              <div className="font-display text-lg leading-none font-bold tracking-[0.18em] text-ok uppercase">
+                Shipped
               </div>
-              <div className="mt-0.5 font-mono text-[9px] tracking-[0.2em] text-warn/80 uppercase">
-                next project
+              <div className="mt-0.5 font-mono text-[9px] tracking-[0.2em] text-ok/80 uppercase">
+                v0.1.0 · as-built
               </div>
             </div>
           </div>
@@ -229,7 +241,7 @@ export function Hero() {
             <span className="h-2.5 w-px bg-bp/60" />
             <span className="h-px flex-1 bg-bp/40" />
             <span className="font-mono text-[10px] tracking-[0.18em] text-bp/90 uppercase">
-              1 command → 16 files
+              1 command → 15 files
             </span>
             <span className="h-px flex-1 bg-bp/40" />
             <span className="h-2.5 w-px bg-bp/60" />
@@ -237,23 +249,26 @@ export function Hero() {
 
           <p className="mt-6 max-w-md text-[15px] leading-relaxed text-mist">
             Every BillyBox repo starts the same way: pyproject, publish pipeline with the
-            tag-vs-wheel guard, CI matrix, pre-commit, suite wiring.{" "}
+            tag-vs-version guard, CI matrix, pre-commit, suite wiring.{" "}
             <span className="text-chalk">blueprint</span> stamps out the whole standard in one
-            command — so a blank directory becomes a production-ready repo before the coffee
-            cools.
+            command — v0.1.0 has landed, tested, and ready for its PyPI tag.
           </p>
 
           <ul className="mt-7 flex flex-wrap gap-2">
-            {["v0.1.0", "stdlib only · 0 deps", "single file: blueprint.py", "python ≥ 3.10"].map(
-              (c) => (
-                <li
-                  key={c}
-                  className="border border-line bg-panel/70 px-2.5 py-1 font-mono text-[11px] text-mist transition-colors hover:border-bp/50 hover:text-chalk"
-                >
-                  {c}
-                </li>
-              ),
-            )}
+            {[
+              "v0.1.0 · landed",
+              "stdlib only · 0 deps",
+              "single file: blueprint.py",
+              "python ≥ 3.9",
+              "22 tests · all green",
+            ].map((c) => (
+              <li
+                key={c}
+                className="border border-line bg-panel/70 px-2.5 py-1 font-mono text-[11px] text-mist transition-colors hover:border-bp/50 hover:text-chalk"
+              >
+                {c}
+              </li>
+            ))}
           </ul>
 
           <div className="mt-8 flex flex-wrap items-center gap-4">
@@ -265,10 +280,10 @@ export function Hero() {
               <span className="transition-transform group-hover:translate-x-1">→</span>
             </a>
             <a
-              href="#cli"
+              href="#proof"
               className="inline-flex items-center gap-2 border border-line px-5 py-2.5 font-mono text-xs tracking-wider text-mist uppercase transition-colors hover:border-line2 hover:text-chalk"
             >
-              CLI reference
+              proof of build
             </a>
           </div>
         </div>

@@ -1,7 +1,7 @@
 /* ------------------------------------------------------------------
- * blueprint · embedded templates
- * The same idea as the real CLI: every template lives in one file and
- * is rendered with plain string substitution. Zero dependencies.
+ * blueprint · embedded templates — as-built, v0.1.0
+ * Ported verbatim from the shipped blueprint.py: every template lives
+ * in one file and renders with $variable substitution. Zero deps.
  * ------------------------------------------------------------------ */
 
 export type LicenseId = "MIT" | "Apache-2.0" | "none";
@@ -28,21 +28,19 @@ export const LICENSES: { id: LicenseId; label: string }[] = [
   { id: "none", label: "none" },
 ];
 
-/* ---------------- naming helpers ---------------- */
+/* ---------------- naming helpers (mirror blueprint.py) ---------------- */
 
-export function slugify(raw: string): string {
-  const s = raw
-    .trim()
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "");
-  return s || "my-project";
+/** keep the raw project name, like the CLI does */
+export function projectName(raw: string): string {
+  return raw.trim() || "my-project";
 }
 
-export function toModule(slug: string): string {
-  let m = slug.replace(/-/g, "_");
-  if (/^[0-9]/.test(m)) m = "_" + m;
-  return m || "my_project";
+/** normalize_package_name() from blueprint.py */
+export function normalizePackage(raw: string): string {
+  let name = projectName(raw).replace(/-/g, "_");
+  name = name.replace(/[^\w]/g, "");
+  if (name && !/^[A-Za-z_]/.test(name)) name = "_" + name;
+  return name.toLowerCase();
 }
 
 export function formatBytes(n: number): string {
@@ -53,130 +51,83 @@ export function formatBytes(n: number): string {
 const enc = new TextEncoder();
 const size = (s: string) => enc.encode(s).length;
 
-interface Ctx {
-  slug: string;
-  module: string;
-  description: string;
-  author: string;
-  year: string;
-  iso: string;
+const TOKENS =
+  /\$(project_name|package_name|description|author|license_spdx|license_name)/g;
+
+function substitute(tpl: string, vars: Record<string, string>): string {
+  return tpl.replace(TOKENS, (_, k: string) => vars[k] ?? "");
 }
 
-function fill(tpl: string, ctx: Record<string, string>): string {
-  return tpl.replace(/\{\{(\w+)\}\}/g, (_, k: string) => ctx[k] ?? "");
-}
-
-/* ---------------- templates ---------------- */
+/* ---------------- the 16 templates ---------------- */
 
 const T_PYPROJECT = `
 [build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
 
 [project]
-name = "{{slug}}"
+name = "$project_name"
 version = "0.1.0"
-description = "{{description}}"
+authors = [
+    { name = "$author", email = "author@example.com" },
+]
+description = "$description"
 readme = "README.md"
-authors = [{ name = "{{author}}" }]
-requires-python = ">=3.10"
-{{licenseLine}}keywords = ["billybox", "{{slug}}"]
+requires-python = ">=3.9"
+license = { text = "$license_spdx" }
 classifiers = [
-  "Development Status :: 3 - Alpha",
-  "Intended Audience :: Developers",
-  "Operating System :: OS Independent",
-  "Programming Language :: Python :: 3.10",
-  "Programming Language :: Python :: 3.11",
-  "Programming Language :: Python :: 3.12",
-  "Programming Language :: Python :: 3.13",
-  "Topic :: Software Development :: Build Tools",
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
 ]
 
 [project.scripts]
-{{module}} = "{{module}}.main:main"
+$package_name = "$package_name.main:main"
 
 [project.urls]
-Homepage = "https://github.com/billybox/{{slug}}"
-Issues = "https://github.com/billybox/{{slug}}/issues"
-
-[tool.hatch.build.targets.wheel]
-packages = ["src/{{module}}"]
-
-[tool.ruff]
-line-length = 100
-target-version = "py310"
-
-[tool.ruff.lint]
-select = ["E", "F", "I", "UP", "B", "SIM"]
-
-[tool.mypy]
-strict = true
-python_version = "3.10"
-
-[tool.pytest.ini_options]
-testpaths = ["tests"]
-addopts = "-q"
+"Homepage" = "https://github.com/billybox/$project_name"
+"Bug Tracker" = "https://github.com/billybox/$project_name/issues"
 `;
 
 const T_README = `
-# {{slug}}
+# $project_name
 
-> {{description}}
+$description
 
-[![PyPI version](https://img.shields.io/pypi/v/{{slug}}?color=57aeff)](https://pypi.org/project/{{slug}}/)
-[![ci](https://github.com/billybox/{{slug}}/actions/workflows/ci.yml/badge.svg)](https://github.com/billybox/{{slug}}/actions/workflows/ci.yml)
-[![python](https://img.shields.io/pypi/pyversions/{{slug}})](https://pypi.org/project/{{slug}}/)
-[![ruff](https://img.shields.io/badge/lint-ruff-57aeff)](https://docs.astral.sh/ruff/)
-{{licenseBadge}}
-## Install
+## Installation
 
 \\\`\\\`\\\`bash
-pip install {{slug}}
+pip install $project_name
 \\\`\\\`\\\`
 
-## Quickstart
+## Usage
 
 \\\`\\\`\\\`bash
-{{module}} --version
-{{module}} --help
+$package_name --help
 \\\`\\\`\\\`
 
 ## Development
 
 \\\`\\\`\\\`bash
-pip install -e .
-pip install ruff mypy pytest
-ruff check . && ruff format --check .
-mypy src
+# Install development dependencies
+pip install -e ".[dev]"
+
+# Run tests
 pytest
+
+# Run linting
+ruff check .
+mypy .
 \\\`\\\`\\\`
 
-Pre-commit hooks enforce the BillyBox standard on every commit —
-see \\\`.pre-commit-config.yaml\\\`.
+## License
 
-## BillyBox wiring
-
-This repo ships pre-wired for the BillyBox suite:
-
-| File              | Purpose                                   |
-| ----------------- | ----------------------------------------- |
-| \\\`bb.json\\\`         | project identity + suite defaults         |
-| \\\`policy.json\\\`     | policies checked by \\\`policy-runner\\\`     |
-| \\\`routes.json\\\`     | fixtures served by \\\`mockroute\\\`          |
-| \\\`commitlog.json\\\`  | release notes consumed by \\\`commitlog\\\`   |
-| \\\`.ctxignore\\\`      | keep \\\`ctxpack\\\` context lean             |
-
-Run \\\`bb preflight\\\` before cutting a release.
-
----
-
-Part of the [BillyBox suite](https://github.com/billybox) · generated by **blueprint v0.1.0**
+$license_name
 `;
 
 const T_LICENSE_MIT = `
 MIT License
 
-Copyright (c) {{year}} {{author}}
+Copyright (c) 2026 $author
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -202,28 +153,7 @@ const T_LICENSE_APACHE = `
                            Version 2.0, January 2004
                         http://www.apache.org/licenses/
 
-   TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION
-
-   1. Definitions.
-
-      "License" shall mean the terms and conditions for use, reproduction,
-      and distribution as defined by Sections 1 through 9 of this document.
-
-      "Licensor" shall mean the copyright owner or entity authorized by
-      the copyright owner that is granting the License.
-
-      "You" (or "Your") shall mean an individual or Legal Entity
-      exercising permissions granted by this License.
-
-      [... Sections 2–9: grant of license, redistribution, notices,
-           contributions, trademarks, disclaimer of warranty,
-           limitation of liability, accepting warranties, indemnity ...]
-
-   END OF TERMS AND CONDITIONS
-
-   APPENDIX: How to apply the Apache License to your work.
-
-   Copyright {{year}} {{author}}
+   Copyright 2026 $author
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -233,388 +163,344 @@ const T_LICENSE_APACHE = `
 
    Unless required by applicable law or agreed to in writing, software
    distributed under the License is distributed on an "AS IS" BASIS,
-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
-   implied. See the License for the specific language governing
-   permissions and limitations under the License.
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
 `;
 
 const T_GITIGNORE = `
-# --- python ---
+# Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
-*.egg-info/
+*$py.class
+
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
 build/
+develop-eggs/
 dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
 wheels/
+*.egg-info/
+.installed.cfg
+*.egg
 
-# --- environments ---
-.venv/
-venv/
-.env
-.env.*
+# PyInstaller
+*.manifest
+*.spec
 
-# --- tooling caches ---
-.mypy_cache/
-.pytest_cache/
-.ruff_cache/
-.coverage
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
 htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
 
-# --- os / editor ---
-.DS_Store
-.idea/
+# Translations
+*.mo
+*.pot
+
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+
+# IDE
 .vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
 `;
 
 const T_PRECOMMIT = `
 repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.1.0
+    hooks:
+      - id: ruff
+        args: [--fix, --exit-non-zero-on-fix]
+
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.5.0
+    hooks:
+      - id: mypy
+        additional_dependencies: [types-all]
+
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v5.0.0
+    rev: v4.4.0
     hooks:
       - id: trailing-whitespace
       - id: end-of-file-fixer
       - id: check-yaml
-      - id: check-toml
-      - id: check-json
       - id: check-added-large-files
-
-  - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.8.6
-    hooks:
-      - id: ruff
-        args: [--fix]
-      - id: ruff-format
-
-  - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.14.1
-    hooks:
-      - id: mypy
-        args: [--strict, src]
 `;
 
 const T_CI = `
-name: ci
+name: CI
 
 on:
   push:
     branches: [main]
-  pull_request: {}
+  pull_request:
+    branches: [main]
 
 jobs:
-  quality:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-      - name: Install
-        run: |
-          pip install -e .
-          pip install ruff mypy
-      - name: Lint (ruff)
-        run: ruff check . && ruff format --check .
-      - name: Types (mypy --strict)
-        run: mypy src
-
   test:
     runs-on: ubuntu-latest
     strategy:
-      fail-fast: false
       matrix:
-        python-version: ["3.10", "3.11", "3.12", "3.13"]
+        python-version: ["3.9", "3.10", "3.11", "3.12"]
+
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+
+      - name: Set up Python \${{ matrix.python-version }}
+        uses: actions/setup-python@v5
         with:
           python-version: \${{ matrix.python-version }}
-      - name: Install
+
+      - name: Install dependencies
         run: |
-          pip install -e .
-          pip install pytest
-      - name: Test (pytest)
-        run: pytest
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+
+      - name: Lint with ruff
+        run: |
+          ruff check .
+
+      - name: Type check with mypy
+        run: |
+          mypy .
+
+      - name: Test with pytest
+        run: |
+          pytest
 `;
 
 const T_PUBLISH = `
-name: publish
+name: Publish to PyPI
 
 on:
   push:
-    tags: ["v*"]
+    tags:
+      - "v*"
 
 jobs:
-  guard:
-    # Tag-vs-wheel guard: refuse to publish when the pushed tag
-    # does not match the version baked into pyproject.toml.
+  publish:
     runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-      - name: Tag ↔ wheel guard
-        run: |
-          set -euo pipefail
-          TAG="\${GITHUB_REF_NAME#v}"
-          VER="$(python -c "import tomllib;print(tomllib.load(open('pyproject.toml','rb'))['project']['version'])")"
-          echo "tag=v$TAG · wheel=$VER"
-          test "$TAG" = "$VER" || { echo "::error::v$TAG ≠ $VER — refusing to publish"; exit 1; }
-
-  build:
-    needs: guard
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-      - run: pip install build
-      - run: python -m build
-      - uses: actions/upload-artifact@v4
-        with:
-          name: dist
-          path: dist/
-
-  release:
-    needs: build
-    runs-on: ubuntu-latest
+    environment: pypi
     permissions:
-      id-token: write  # OIDC trusted publishing — no long-lived PyPI tokens
+      id-token: write
+
     steps:
-      - uses: actions/download-artifact@v4
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
         with:
-          name: dist
-          path: dist/
-      - uses: pypa/gh-action-pypi-publish@release/v1
+          python-version: "3.12"
+
+      - name: Install build dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install build
+
+      - name: Build package
+        run: |
+          python -m build
+
+      - name: Verify tag matches version
+        run: |
+          TAG_VERSION=\${GITHUB_REF#refs/tags/v}
+          PKG_VERSION=$(python -c "import tomllib; print(tomllib.load(open('pyproject.toml', 'rb'))['project']['version'])")
+          if [ "$TAG_VERSION" != "$PKG_VERSION" ]; then
+            echo "Error: Tag version ($TAG_VERSION) does not match pyproject.toml version ($PKG_VERSION)"
+            exit 1
+          fi
+
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
 `;
 
-const T_INIT_PY = `
-"""{{description}}"""
+const T_INIT = `
+"""$project_name - $description"""
 
 __version__ = "0.1.0"
 `;
 
-const T_MAIN_PY = `
-"""{{description}}
-
-CLI entry point — wired by blueprint v0.1.0.
-"""
-from __future__ import annotations
+const T_MAIN = `
+#!/usr/bin/env python3
+"""Main entry point for $project_name."""
 
 import argparse
+import sys
 
-from {{module}} import __version__
 
-
-def build_parser() -> argparse.ArgumentParser:
+def main() -> int:
+    """Main function."""
     parser = argparse.ArgumentParser(
-        prog="{{module}}",
-        description="{{description}}",
+        description="$description",
     )
     parser.add_argument(
         "--version",
         action="version",
-        version=f"%(prog)s {__version__}",
+        version=f"%(prog)s {__import__('$package_name').__version__}",
     )
-    return parser
 
+    args = parser.parse_args()
 
-def main(argv: list[str] | None = None) -> int:
-    parser = build_parser()
-    parser.parse_args(argv)
-    print("{{slug}} is wired and waiting — implement me.")
+    print(f"$project_name v{__import__('$package_name').__version__}")
     return 0
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    sys.exit(main())
 `;
 
-const T_TEST_MAIN = `
-from {{module}} import __version__
-from {{module}}.main import main
+const T_TEST = `
+"""Tests for $package_name."""
+
+from $package_name import __version__
+from $package_name.main import main
 
 
-def test_version() -> None:
+def test_version():
+    """Test that version is defined."""
     assert __version__ == "0.1.0"
 
 
-def test_main_returns_zero() -> None:
-    assert main([]) == 0
-`;
-
-const T_DOCS_INDEX = `
-# {{slug}} — documentation skeleton
-
-Generated by **blueprint v0.1.0**. Fill these in before the first release.
-
-## Contents
-
-1. [Overview](#overview)
-2. [Install](#install)
-3. [Usage](#usage)
-4. [Configuration](#configuration)
-
-## Overview
-
-_TODO — what does {{slug}} do, and why does it exist?_
-
-## Install
-
-\\\`\\\`\\\`bash
-pip install {{slug}}
-\\\`\\\`\\\`
-
-## Usage
-
-\\\`\\\`\\\`bash
-{{module}} --help
-\\\`\\\`\\\`
-
-_TODO — document every flag and exit code._
-
-## Configuration
-
-{{slug}} reads BillyBox wiring from the repo root:
-\\\`bb.json\\\`, \\\`policy.json\\\`, \\\`routes.json\\\`, \\\`commitlog.json\\\`.
-
-_TODO — document each knob._
+def test_main(capsys):
+    """Test main function."""
+    import sys
+    sys.argv = ["test"]
+    result = main()
+    assert result == 0
+    captured = capsys.readouterr()
+    assert "$project_name" in captured.out
 `;
 
 const T_BB_JSON = `
 {
-  "project": "{{slug}}",
-  "suite": "billybox",
-  "blueprint": {
-    "version": "0.1.0",
-    "template": "python-cli",
-    "generated_at": "{{iso}}"
-  },
-  "defaults": {
-    "python": ">=3.10",
-    "ci": true,
-    "publish": "oidc-trusted"
-  }
+  "name": "$project_name",
+  "version": "0.1.0",
+  "description": "$description",
+  "author": "$author",
+  "license": "$license_spdx"
 }
 `;
 
 const T_CTXIGNORE = `
-# keep ctxpack context lean — nothing generated or vendored
+# Files to ignore in context
 .git/
+__pycache__/
+*.pyc
+.env
 .venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
 dist/
 build/
 *.egg-info/
-__pycache__/
-.mypy_cache/
-.pytest_cache/
-.ruff_cache/
-htmlcov/
-*.pyc
 `;
 
-const T_POLICY_JSON = `
+const T_POLICY = `
 {
-  "version": 1,
-  "policies": [
-    {
-      "id": "P-001",
-      "name": "no secrets in repo",
-      "severity": "block",
-      "check": "secrets-scan"
-    },
-    {
-      "id": "P-002",
-      "name": "version tag matches wheel",
-      "severity": "block",
-      "check": "tag-wheel-guard"
-    },
-    {
-      "id": "P-003",
-      "name": "release notes present",
-      "severity": "warn",
-      "check": "commitlog-entry"
-    }
-  ]
+  "version": "1.0",
+  "rules": []
 }
 `;
 
-const T_ROUTES_JSON = `
+const T_ROUTES = `
 {
-  "version": 1,
-  "routes": [
-    {
-      "name": "health",
-      "method": "GET",
-      "path": "/healthz",
-      "status": 200,
-      "body": { "ok": true, "service": "{{slug}}" }
-    }
-  ]
+  "version": "1.0",
+  "routes": []
 }
 `;
 
-const T_COMMITLOG_JSON = `
+const T_COMMITLOG = `
 {
-  "version": 1,
-  "project": "{{slug}}",
+  "version": "1.0",
   "entries": []
 }
 `;
 
 /* ---------------- renderer ---------------- */
 
+function licenseInfo(id: LicenseId): { spdx: string; name: string } {
+  if (id === "MIT") return { spdx: "MIT", name: "MIT License" };
+  if (id === "Apache-2.0")
+    return { spdx: "Apache-2.0", name: "Apache License 2.0" };
+  return { spdx: "NONE", name: "No License" };
+}
+
 export function renderProject(cfg: ProjectConfig): GeneratedFile[] {
-  const slug = slugify(cfg.name);
-  const module = toModule(slug);
-  const description = cfg.description.trim() || "A BillyBox tool.";
-  const author = cfg.author.trim() || "Billy Box";
-  const year = String(new Date().getFullYear());
-  const iso = `${year}-01-01T00:00:00Z`;
+  const pName = projectName(cfg.name);
+  const pkg = normalizePackage(cfg.name);
+  const { spdx, name: licName } = licenseInfo(cfg.license);
 
-  const ctx: Ctx = { slug, module, description, author, year, iso };
-  const vars: Record<string, string> = { ...ctx };
-
-  const licenseLine =
-    cfg.license === "none" ? "" : `license = "${cfg.license}"\n`;
-  const licenseBadge =
-    cfg.license === "none"
-      ? ""
-      : `[![license](https://img.shields.io/pypi/l/${slug})](./LICENSE)\n`;
+  const vars: Record<string, string> = {
+    project_name: pName,
+    package_name: pkg,
+    description: cfg.description,
+    author: cfg.author || "Unknown",
+    license_spdx: spdx,
+    license_name: licName,
+  };
 
   const mk = (path: string, lang: Lang, tpl: string): GeneratedFile => {
-    const content = fill(tpl, { ...vars, licenseLine, licenseBadge }).replace(
-      /^\n/,
-      "",
-    );
+    const content = substitute(tpl, vars).replace(/^\n/, "");
     return { path, lang, content, bytes: size(content) };
   };
 
   const files: GeneratedFile[] = [
     mk("pyproject.toml", "toml", T_PYPROJECT),
     mk("README.md", "markdown", T_README),
+    mk(".gitignore", "text", T_GITIGNORE),
+    mk(".pre-commit-config.yaml", "yaml", T_PRECOMMIT),
+    mk(".github/workflows/ci.yml", "yaml", T_CI),
+    mk(".github/workflows/publish.yml", "yaml", T_PUBLISH),
+    mk(`src/${pkg}/__init__.py`, "python", T_INIT),
+    mk(`src/${pkg}/main.py`, "python", T_MAIN),
+    mk("tests/test_main.py", "python", T_TEST),
+    mk("bb.json", "json", T_BB_JSON),
+    mk(".ctxignore", "text", T_CTXIGNORE),
+    mk("policy.json", "json", T_POLICY),
+    mk("routes.json", "json", T_ROUTES),
+    mk("commitlog.json", "json", T_COMMITLOG),
   ];
 
   if (cfg.license === "MIT") files.push(mk("LICENSE", "text", T_LICENSE_MIT));
   if (cfg.license === "Apache-2.0")
     files.push(mk("LICENSE", "text", T_LICENSE_APACHE));
-
-  files.push(
-    mk(".gitignore", "text", T_GITIGNORE),
-    mk(".pre-commit-config.yaml", "yaml", T_PRECOMMIT),
-    mk(".github/workflows/ci.yml", "yaml", T_CI),
-    mk(".github/workflows/publish.yml", "yaml", T_PUBLISH),
-    mk(`src/${module}/__init__.py`, "python", T_INIT_PY),
-    mk(`src/${module}/main.py`, "python", T_MAIN_PY),
-    mk("tests/test_main.py", "python", T_TEST_MAIN),
-    mk("docs/index.md", "markdown", T_DOCS_INDEX),
-    mk("bb.json", "json", T_BB_JSON),
-    mk(".ctxignore", "text", T_CTXIGNORE),
-    mk("policy.json", "json", T_POLICY_JSON),
-    mk("routes.json", "json", T_ROUTES_JSON),
-    mk("commitlog.json", "json", T_COMMITLOG_JSON),
-  );
 
   return files;
 }
@@ -628,20 +514,106 @@ export const DEFAULT_CONFIG: ProjectConfig = {
 
 /* notes shown in the file viewer */
 export const FILE_NOTES: Record<string, string> = {
-  "pyproject.toml": "hatchling build · script entry point · ruff/mypy/pytest config",
-  "README.md": "badges, quickstart, and the BillyBox wiring table",
-  LICENSE: "full text embedded — MIT by default, Apache-2.0 on request",
-  ".gitignore": "python + venv + tooling caches",
-  ".pre-commit-config.yaml": "the BillyBox pre-commit standard",
-  ".github/workflows/ci.yml": "ruff + mypy on 3.12 · pytest matrix 3.10→3.13",
-  ".github/workflows/publish.yml": "tag-vs-wheel guard · OIDC trusted publishing",
-  "__init__.py": "single source of truth for __version__",
-  "main.py": "argparse skeleton — the script entry point lands here",
-  "test_main.py": "one passing test on day one",
-  "index.md": "docs skeleton with TODOs, not lorem",
+  "pyproject.toml": "setuptools ≥ 61 · script entry point · PyPI metadata",
+  "README.md": "install · usage · dev loop · license",
+  LICENSE: "full text embedded — MIT or Apache-2.0",
+  ".gitignore": "python + packaging + venv + IDE + OS",
+  ".pre-commit-config.yaml": "ruff + mypy + housekeeping hooks",
+  "ci.yml": "matrix 3.9 → 3.12 · ruff · mypy · pytest",
+  "publish.yml": "tag-vs-version guard · OIDC id-token: write",
+  "__init__.py": "docstring + __version__, single source of truth",
+  "main.py": "argparse entry point wired via [project.scripts]",
+  "test_main.py": "version + main() smoke tests, passing on day one",
   "bb.json": "project identity for the whole suite",
   ".ctxignore": "keeps ctxpack context lean",
-  "policy.json": "seed policies for policy-runner",
-  "routes.json": "seed fixture for mockroute",
-  "commitlog.json": "empty ledger, ready for commitlog",
+  "policy.json": "policy-runner seed — empty ruleset, version 1.0",
+  "routes.json": "mockroute seed — empty route table",
+  "commitlog.json": "commitlog seed — empty ledger",
 };
+
+/* ---------------- as-built facts ---------------- */
+
+export const TEST_SUITES: { name: string; note?: string; tests: string[] }[] = [
+  {
+    name: "TestNormalizePackageName",
+    tests: [
+      "test_hyphen_to_underscore",
+      "test_multiple_hyphens",
+      "test_already_valid",
+      "test_uppercase_to_lowercase",
+      "test_special_characters_removed",
+      "test_starts_with_number",
+    ],
+  },
+  {
+    name: "TestRenderTemplate",
+    tests: [
+      "test_simple_substitution",
+      "test_multiple_variables",
+      "test_missing_variable_safe",
+    ],
+  },
+  {
+    name: "TestGenerateProject",
+    tests: [
+      "test_generate_creates_files",
+      "test_generate_no_license",
+      "test_generate_dry_run",
+      "test_generate_force_overwrite",
+      "test_generate_existing_no_force_fails",
+      "test_generated_pyproject_content",
+      "test_generated_readme_content",
+    ],
+  },
+  {
+    name: "TestCollectNonInteractiveInput",
+    tests: [
+      "test_all_args_provided",
+      "test_minimal_args",
+      "test_missing_project_name_fails",
+    ],
+  },
+  {
+    name: "TestCLIIntegration",
+    note: "subprocess · end-to-end",
+    tests: ["test_cli_new_command", "test_cli_dry_run", "test_cli_version"],
+  },
+];
+
+export const ANATOMY: { section: string; rows: [string, string][] }[] = [
+  {
+    section: "TEMPLATES",
+    rows: [
+      ["16 constants", "pyproject.toml → commitlog.json, embedded verbatim"],
+      ["3 license states", "MIT · Apache-2.0 · none (LICENSE dropped)"],
+    ],
+  },
+  {
+    section: "CORE LOGIC",
+    rows: [
+      ["normalize_package_name()", "my-project → my_project, leading-digit guard"],
+      ["get_license_info()", "id → template + SPDX + display name"],
+      ["collect_interactive_input()", "prompt-driven, with defaults"],
+      ["collect_non_interactive_input()", "flags only, fails on missing name"],
+      ["render_template()", "string.Template.safe_substitute"],
+      ["generate_project()", "mkdir tree · --dry-run · --force"],
+    ],
+  },
+  {
+    section: "CLI",
+    rows: [["argparse", "verb new + 8 flags, --version included"]],
+  },
+];
+
+export const IMPORTS = ["argparse", "json", "os", "re", "sys", "pathlib", "string.Template"];
+
+export const MANIFEST = [
+  { name: "blueprint.py", note: "the whole tool — 16 templates embedded" },
+  { name: "pyproject.toml", note: "entry point: blueprint = blueprint:main" },
+  { name: "README.md" },
+  { name: "LICENSE" },
+  { name: ".gitignore" },
+  { name: ".pre-commit-config.yaml" },
+  { name: "tests/test_blueprint.py", note: "22 tests · 5 suites" },
+  { name: ".github/workflows/ci.yml", note: "eats its own dogfood" },
+];

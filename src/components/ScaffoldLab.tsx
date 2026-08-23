@@ -4,9 +4,9 @@ import {
   FILE_NOTES,
   LICENSES,
   formatBytes,
+  normalizePackage,
+  projectName,
   renderProject,
-  slugify,
-  toModule,
   type LicenseId,
   type ProjectConfig,
 } from "../lib/templates";
@@ -47,8 +47,8 @@ function ConfigForm({
   totalBytes: number;
   renderMs: number;
 }) {
-  const slug = slugify(cfg.name);
-  const module = toModule(slug);
+  const name = projectName(cfg.name);
+  const module = normalizePackage(cfg.name);
   const set = (patch: Partial<ProjectConfig>) => onChange({ ...cfg, ...patch });
 
   return (
@@ -75,7 +75,7 @@ function ConfigForm({
 
         <div className="flex flex-wrap gap-2 font-mono text-[11px]">
           <span className="border border-line bg-ink px-2 py-1 text-mist">
-            slug <span className="text-bp">{slug}</span>
+            project <span className="text-bp">{name}</span>
           </span>
           <span className="border border-line bg-ink px-2 py-1 text-mist">
             module <span className="text-bp">{module}</span>
@@ -123,7 +123,7 @@ function ConfigForm({
       </div>
 
       <div
-        key={`${slug}-${cfg.license}`}
+        key={`${name}-${cfg.license}`}
         className="status-flash mt-5 flex items-center justify-between border-t border-line pt-4 font-mono text-[11px] text-mist"
       >
         <span>
@@ -228,9 +228,10 @@ export function ScaffoldLab() {
   const [selected, setSelected] = useState("pyproject.toml");
   const current = files.find((f) => f.path === selected) ?? files[0];
   const totalBytes = files.reduce((s, f) => s + f.bytes, 0);
-  const slug = slugify(cfg.name);
+  const name = projectName(cfg.name);
+  const lic = cfg.license === "none" ? "none" : cfg.license.toLowerCase();
 
-  const cmd = `python blueprint.py new ${slug} --author "${cfg.author.trim() || "Billy Box"}" --license ${cfg.license === "none" ? "none" : cfg.license} --no-interactive`;
+  const cmd = `python blueprint.py new ${name} --author "${cfg.author.trim() || "Billy Box"}" --license ${lic} --no-interactive`;
 
   const note =
     FILE_NOTES[current.path] ?? FILE_NOTES[current.path.split("/").pop() ?? current.path];
@@ -277,7 +278,7 @@ export function ScaffoldLab() {
                 files={files}
                 selected={current.path}
                 onSelect={setSelected}
-                treeKey={`${slug}|${cfg.license}`}
+                treeKey={`${name}|${cfg.license}`}
               />
             </div>
             <div className="h-[460px] min-w-0 xl:h-[560px]">
@@ -287,7 +288,7 @@ export function ScaffoldLab() {
               </div>
               <div className="h-[calc(100%-24px)]">
                 <CodeViewer
-                  key={current.path + slug + cfg.license + cfg.author + cfg.description}
+                  key={current.path + name + cfg.license + cfg.author + cfg.description}
                   path={current.path}
                   lang={current.lang}
                   content={current.content}

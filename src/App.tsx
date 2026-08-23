@@ -1,7 +1,7 @@
 import { Background, Footer, TopBar } from "./components/Chrome";
 import { Hero } from "./components/Hero";
 import { ScaffoldLab } from "./components/ScaffoldLab";
-import { Cli, Lifecycle, Queue, Scope } from "./components/Sections";
+import { Cli, Lifecycle, Proof, Queue, Scope } from "./components/Sections";
 
 export default function App() {
   return (
@@ -12,6 +12,7 @@ export default function App() {
         <Hero />
         <ScaffoldLab />
         <Lifecycle />
+        <Proof />
         <Scope />
         <Cli />
         <Queue />
