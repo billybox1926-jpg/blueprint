@@ -1,5 +1,27 @@
+# --- node / build ---
 node_modules/
-.next/
 dist/
 build/
 *.log
+
+# --- environments ---
+.venv/
+venv/
+.env
+.env.*
+
+# --- tooling caches ---
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+__pycache__/
+*.py[cod]
+*.egg-info/
+
+# --- os / editor ---
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
