@@ -15,9 +15,9 @@ from contextlib import redirect_stderr, redirect_stdout
 from pathlib import Path
 
 try:
-    import tomllib
-except ModuleNotFoundError:  # Python 3.10
-    import tomli as tomllib  # type: ignore[no-redef]
+    import tomllib  # Python 3.11+
+except ModuleNotFoundError:
+    tomllib = None  # Python 3.10: skip TOML-parsing assertions
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
@@ -85,11 +85,15 @@ class TestGenerateProject(unittest.TestCase):
         self.assertIn("Apache License", apache["LICENSE"])
 
     def test_pyproject_parses_and_has_license_line(self) -> None:
+        if tomllib is None:
+            self.skipTest("tomllib unavailable on Python 3.10")
         data = tomllib.loads(self.files["pyproject.toml"])
         self.assertEqual(data["project"]["name"], "demo-project")
         self.assertEqual(data["project"]["license"], "MIT")
 
     def test_pyproject_license_line_absent_for_none(self) -> None:
+        if tomllib is None:
+            self.skipTest("tomllib unavailable on Python 3.10")
         data = tomllib.loads(
             blueprint.generate_project("d", license_id="none")["pyproject.toml"]
         )
