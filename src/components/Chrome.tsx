@@ -25,6 +25,7 @@ export function Background() {
 const NAV = [
   { href: "#scaffold", label: "Scaffold" },
   { href: "#lifecycle", label: "Lifecycle" },
+  { href: "#proof", label: "Proof" },
   { href: "#scope", label: "Scope" },
   { href: "#cli", label: "CLI" },
   { href: "#queue", label: "Queue" },
@@ -55,9 +56,9 @@ export function TopBar() {
           ))}
         </nav>
         <div className="ml-auto flex items-center gap-2 md:ml-3">
-          <span className="hidden items-center gap-1.5 border border-warn/40 bg-warn/10 px-2 py-1 font-mono text-[10px] tracking-wider text-warn sm:flex">
-            <span className="pulse-dot inline-block h-1.5 w-1.5 rounded-full bg-warn" />
-            QUEUED
+          <span className="hidden items-center gap-1.5 border border-ok/40 bg-ok/10 px-2 py-1 font-mono text-[10px] tracking-wider text-ok sm:flex">
+            <span className="pulse-dot inline-block h-1.5 w-1.5 rounded-full bg-ok" />
+            SHIPPED
           </span>
           <span className="border border-line bg-panel px-2 py-1 font-mono text-[10px] text-mist">
             v0.1.0
@@ -86,8 +87,8 @@ export function Footer() {
         <div className="grid grid-cols-2 gap-px border border-line bg-line/40 md:grid-cols-6">
           <Cell k="Title" v="blueprint" />
           <Cell k="Suite" v="BillyBox" />
-          <Cell k="Sheet" v="01 of 01" />
-          <Cell k="Rev" v="A" />
+          <Cell k="Sheet" v="06 of 06" />
+          <Cell k="Rev" v="B · as-built" />
           <Cell k="Scale" v="1 : 0.1.0" />
           <Cell k="Drawn" v="BB · 2026" />
         </div>

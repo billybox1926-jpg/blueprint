@@ -1,4 +1,5 @@
 import { useInView } from "../lib/hooks";
+import { ANATOMY, IMPORTS, MANIFEST, TEST_SUITES } from "../lib/templates";
 import {
   ArrowIcon,
   CheckIcon,
@@ -116,6 +117,159 @@ export function Lifecycle() {
   );
 }
 
+/* ================= PROOF OF BUILD ================= */
+
+const TOTAL_TESTS = TEST_SUITES.reduce((s, g) => s + g.tests.length, 0);
+
+export function Proof() {
+  return (
+    <section id="proof" className="relative z-10 scroll-mt-20">
+      <div className="mx-auto max-w-6xl px-5 py-20 md:px-8">
+        <SectionHeading
+          sheet="Sheet 03"
+          kicker="proof of build"
+          title="One file. Sixteen templates. Twenty-two tests."
+          note="The as-built implementation — everything below is what landed, not a promise."
+        />
+
+        <div className="grid gap-6 lg:grid-cols-2">
+          {/* left: anatomy + audit + manifest */}
+          <div className="flex flex-col gap-6">
+            <Reveal>
+              <div className="border border-line bg-panel/70">
+                <div className="flex items-center justify-between border-b border-line px-5 py-3">
+                  <h3 className="font-display text-xl font-bold tracking-wide text-chalk uppercase">
+                    blueprint.py — anatomy
+                  </h3>
+                  <span className="font-mono text-[10px] tracking-[0.2em] text-faint uppercase">
+                    single file
+                  </span>
+                </div>
+                <div>
+                  {ANATOMY.map((g) => (
+                    <div key={g.section} className="border-b border-line/50 px-5 py-4 last:border-0">
+                      <p className="mb-2.5 font-mono text-[10px] tracking-[0.24em] text-bp uppercase">
+                        {g.section}
+                      </p>
+                      <ul className="space-y-2">
+                        {g.rows.map(([fn, desc]) => (
+                          <li key={fn} className="group flex flex-wrap items-baseline gap-x-3">
+                            <code className="font-mono text-[12.5px] font-medium text-chalk transition-colors group-hover:text-bp">
+                              {fn}
+                            </code>
+                            <span className="text-[12px] text-faint">{desc}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </Reveal>
+
+            <Reveal delay={90}>
+              <div className="draft-corner border border-line bg-ink p-5">
+                <p className="font-mono text-[10px] tracking-[0.22em] text-faint uppercase">
+                  import audit — stdlib only
+                </p>
+                <div className="mt-3 flex flex-wrap gap-1.5">
+                  {IMPORTS.map((m) => (
+                    <span
+                      key={m}
+                      className="border border-line bg-panel px-2 py-1 font-mono text-[11.5px] text-chalk transition-colors hover:border-bp/60 hover:text-bp"
+                    >
+                      {m}
+                    </span>
+                  ))}
+                </div>
+                <p className="mt-3 font-mono text-[11px] text-faint">
+                  …the entire bill of materials. <span className="text-mist">pip install</span>{" "}
+                  footprint: zero.
+                </p>
+              </div>
+            </Reveal>
+
+            <Reveal delay={140}>
+              <div className="border border-line bg-ink/90 p-5">
+                <p className="mb-3 font-mono text-[10px] tracking-[0.22em] text-faint uppercase">
+                  what shipped
+                </p>
+                <ul className="font-mono text-[12.5px]">
+                  {MANIFEST.map((m) => (
+                    <li
+                      key={m.name}
+                      className="flex items-center gap-2 py-[3px] transition-colors hover:text-bp"
+                    >
+                      <FileIcon className="h-3.5 w-3.5 shrink-0 text-faint" />
+                      <span className="text-chalk/90">{m.name}</span>
+                      {m.note ? (
+                        <span className="ml-auto text-right text-[10px] text-faint">{m.note}</span>
+                      ) : null}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </Reveal>
+          </div>
+
+          {/* right: the test run */}
+          <Reveal delay={100}>
+            <div className="flex h-full flex-col border border-ok/30 bg-panel/70">
+              <div className="flex items-center justify-between border-b border-line px-5 py-3">
+                <h3 className="font-display text-xl font-bold tracking-wide text-chalk uppercase">
+                  The test run
+                </h3>
+                <code className="font-mono text-[11px] text-faint">pytest tests/ -v</code>
+              </div>
+              <div className="flex-1 space-y-5 overflow-hidden px-5 py-4">
+                {TEST_SUITES.map((suite, si) => (
+                  <div key={suite.name}>
+                    <div className="mb-2 flex items-center gap-2.5">
+                      <span className="font-mono text-[12px] font-medium text-chalk">
+                        {suite.name}
+                      </span>
+                      {suite.note ? (
+                        <span className="border border-line bg-ink px-1.5 py-px font-mono text-[9px] tracking-wider text-mist uppercase">
+                          {suite.note}
+                        </span>
+                      ) : null}
+                      <span className="ml-auto border border-ok/40 bg-ok/10 px-1.5 py-px font-mono text-[10px] text-ok tabular">
+                        {suite.tests.length} ✓
+                      </span>
+                    </div>
+                    <ul className="grid gap-x-4 sm:grid-cols-2">
+                      {suite.tests.map((t, ti) => (
+                        <li
+                          key={t}
+                          className="row-in flex items-center gap-2 py-[3px] font-mono text-[11px]"
+                          style={{ animationDelay: `${(si * 7 + ti) * 45}ms` }}
+                        >
+                          <StatusDot tone="ok" />
+                          <span className="truncate text-mist">{t}</span>
+                          <span className="ml-auto shrink-0 text-[9px] tracking-wider text-ok/80 uppercase">
+                            passed
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ))}
+              </div>
+              <div className="flex flex-wrap items-center justify-between gap-2 border-t border-ok/30 bg-ok/[0.06] px-5 py-3 font-mono text-[12px]">
+                <span className="text-ok">
+                  <span className="tabular">{TOTAL_TESTS}</span> passed ·{" "}
+                  <span className="tabular">{TEST_SUITES.length}</span> suites · 0 failed
+                </span>
+                <span className="text-faint">exit 0 · green on the first run</span>
+              </div>
+            </div>
+          </Reveal>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 /* ================= SCOPE ================= */
 
 const IN_SCOPE = [
@@ -123,8 +277,8 @@ const IN_SCOPE = [
   ["Interactive + non-interactive modes", "--no-interactive fails on missing values"],
   ["Template variables", "name · module · description · author · license"],
   ["License choice", "MIT default · Apache-2.0 · none"],
-  ["Python-only initial templates", "src-layout package, tests, docs"],
-  ["Zero runtime dependencies", "stdlib only — argparse, pathlib, string"],
+  ["Python-only initial templates", "src-layout package, tests, suite wiring"],
+  ["Zero runtime dependencies", "stdlib only — argparse · pathlib · string.Template"],
   ["Single-file CLI", "blueprint.py, embeds every template"],
   ["Safety flags", "--dry-run · --force · --output PATH"],
 ];
@@ -141,7 +295,7 @@ export function Scope() {
     <section id="scope" className="relative z-10 scroll-mt-20">
       <div className="mx-auto max-w-6xl px-5 py-20 md:px-8">
         <SectionHeading
-          sheet="Sheet 03"
+          sheet="Sheet 04"
           kicker="v0.1.0 scope"
           title="In the box / out of it"
           note="Small on purpose. A scaffolder that can't be read in one sitting isn't a scaffolder."
@@ -212,8 +366,12 @@ export function Scope() {
                   full dependency audit
                 </p>
                 <p className="mt-3 font-mono text-[13px] leading-relaxed text-chalk">
-                  <span className="text-bp">import</span> argparse, pathlib, string, json,
-                  datetime
+                  <span className="text-bp">import</span> argparse, json, os, re, sys
+                  <br />
+                  <span className="text-bp">from</span> pathlib{" "}
+                  <span className="text-bp">import</span> Path ·{" "}
+                  <span className="text-bp">from</span> string{" "}
+                  <span className="text-bp">import</span> Template
                 </p>
                 <p className="mt-2 font-mono text-[11px] text-faint">
                   …that's the entire bill of materials. Everything else is string substitution.
@@ -232,7 +390,7 @@ export function Scope() {
 const EXAMPLES = [
   "python blueprint.py new my-project",
   'python blueprint.py new my-project --description "Local config drift detector"',
-  'python blueprint.py new my-project --author "Billy Box" --license MIT --no-interactive',
+  'python blueprint.py new my-project --author "Billy Box" --license mit --no-interactive',
   "python blueprint.py new my-project --dry-run",
   "python blueprint.py --help",
   "python blueprint.py --version",
@@ -254,6 +412,7 @@ const REPO_TREE = [
   { d: false, name: "README.md" },
   { d: false, name: "LICENSE" },
   { d: false, name: ".gitignore" },
+  { d: false, name: ".pre-commit-config.yaml" },
   { d: false, name: "pyproject.toml" },
   { d: true, name: "tests/" },
   { d: false, name: "test_blueprint.py", note: "render, diff, repeat", deep: true },
@@ -266,7 +425,7 @@ export function Cli() {
     <section id="cli" className="relative z-10 scroll-mt-20 border-y border-line/60 bg-ink/40">
       <div className="mx-auto max-w-6xl px-5 py-20 md:px-8">
         <SectionHeading
-          sheet="Sheet 04"
+          sheet="Sheet 05"
           kicker="cli reference"
           title="Flags & usage"
           note="One verb — new — plus the housekeeping flags. No subcommand maze."
@@ -384,47 +543,59 @@ function Stamp() {
         style={{ boxShadow: "inset 0 0 0 2px rgba(8,24,43,0.9), inset 0 0 0 3.5px rgba(63,214,143,0.5)" }}
       >
         <div className="font-display text-6xl leading-none font-bold tracking-[0.14em] text-ok uppercase">
-          Queued
+          Shipped
         </div>
         <div className="mt-2 flex items-center justify-center gap-2 font-mono text-[11px] tracking-[0.26em] text-ok/90 uppercase">
           <span className="inline-block h-px w-6 bg-ok/60" />
-          official next project
+          v0.1.0 · as-built
           <span className="inline-block h-px w-6 bg-ok/60" />
         </div>
         <div className="mt-1.5 font-mono text-[10px] tracking-[0.2em] text-ok/70 uppercase">
-          billybox · rev a · {new Date().getFullYear()}
+          billybox · rev b · {new Date().getFullYear()}
         </div>
       </div>
     </div>
   );
 }
 
-const TIMELINE = [
+const TIMELINE: {
+  name: string;
+  sub: string;
+  status: string;
+  tone: "ok" | "warn" | "bp";
+}[] = [
   {
     name: "PyPI publishing",
     sub: "publish.yml · tag-vs-wheel guard · OIDC trusted publishing",
     status: "in progress",
-    tone: "warn" as const,
+    tone: "warn",
   },
   {
     name: "bb install",
     sub: "suite toolchain bootstrap from one command",
     status: "in progress",
-    tone: "warn" as const,
+    tone: "warn",
   },
   {
     name: "blueprint v0.1.0",
-    sub: "implementation · tests · CI · packaging",
-    status: "queued — next",
-    tone: "bp" as const,
+    sub: "single file · 16 templates · 22 tests green on the first run",
+    status: "complete",
+    tone: "ok",
+  },
+  {
+    name: "publish blueprint to PyPI",
+    sub: "tag v0.1.0 → guard passes → OIDC upload",
+    status: "next",
+    tone: "bp",
   },
 ];
 
-const CHECKLIST = [
-  "write blueprint.py — single file, templates embedded",
-  "tests/test_blueprint.py — render, assert, diff",
-  ".github/workflows/ci.yml — ruff + mypy + pytest matrix",
-  "pyproject.toml — hatchling, entry point, PyPI metadata",
+const DELIVERED: [string, string][] = [
+  ["done", "blueprint.py — single file, 16 templates embedded"],
+  ["done", "tests/test_blueprint.py — 22 tests across 5 suites, green"],
+  ["done", ".github/workflows/ci.yml — ruff + mypy + pytest matrix"],
+  ["done", "pyproject.toml — setuptools, blueprint entry point, PyPI metadata"],
+  ["todo", "publish to PyPI once the pipeline goes live"],
 ];
 
 export function Queue() {
@@ -432,24 +603,24 @@ export function Queue() {
     <section id="queue" className="relative z-10 scroll-mt-20">
       <div className="mx-auto max-w-6xl px-5 py-20 md:px-8">
         <SectionHeading
-          sheet="Sheet 05"
-          kicker="the decision"
-          title="Shall we queue it?"
-          note="The spec above is the answer, stamped."
+          sheet="Sheet 06"
+          kicker="the decision — executed"
+          title="Queue → shipped"
+          note="The acceptance sheet became a delivery note."
         />
 
         <div className="grid gap-8 lg:grid-cols-2">
           <Reveal>
             <div>
               <p className="font-display text-[clamp(2.8rem,6vw,4.8rem)] leading-[0.95] font-bold text-chalk uppercase">
-                Yes — <span className="text-bp">queued.</span>
+                Yes — <span className="text-ok">and built.</span>
               </p>
               <p className="mt-5 max-w-lg text-[15px] leading-relaxed text-mist">
-                Once PyPI publishing and <span className="font-mono text-[13px] text-chalk">bb install</span>{" "}
-                land, <span className="font-mono text-[13px] text-chalk">blueprint.py</span> v0.1.0
-                goes first: implementation, tests, CI, packaging. One command turns a blank
-                directory into a repo that already passes{" "}
-                <span className="font-mono text-[13px] text-chalk">bb preflight</span>.
+                Queued as the official next project, then implemented in one pass: the
+                single-file CLI, the full test suite, CI, and packaging landed together. One
+                command now turns a blank directory into a repo that already passes{" "}
+                <span className="font-mono text-[13px] text-chalk">bb preflight</span> — all
+                that's left is the PyPI upload.
               </p>
 
               <ol className="mt-8 space-y-0">
@@ -469,7 +640,9 @@ export function Queue() {
                       className={`ml-auto shrink-0 self-center border px-2 py-0.5 font-mono text-[10px] tracking-wider uppercase ${
                         t.tone === "warn"
                           ? "border-warn/40 bg-warn/10 text-warn"
-                          : "border-bp/50 bg-bp/10 text-bp"
+                          : t.tone === "ok"
+                            ? "border-ok/40 bg-ok/10 text-ok"
+                            : "border-bp/50 bg-bp/10 text-bp"
                       }`}
                     >
                       {t.status}
@@ -484,26 +657,39 @@ export function Queue() {
             <div className="border border-line bg-panel/70">
               <div className="border-b border-line px-5 py-3">
                 <h3 className="font-display text-xl font-bold tracking-wide text-chalk uppercase">
-                  Acceptance sheet
+                  Delivery note
                 </h3>
               </div>
               <Stamp />
               <ul className="border-t border-line">
-                {CHECKLIST.map((c) => (
+                {DELIVERED.map(([state, c]) => (
                   <li
                     key={c}
-                    className="flex items-center gap-3 border-b border-line/50 px-5 py-3 font-mono text-[12px] text-mist transition-colors last:border-0 hover:bg-bp/[0.05] hover:text-chalk"
+                    className={`flex items-center gap-3 border-b border-line/50 px-5 py-3 font-mono text-[12px] transition-colors last:border-0 ${
+                      state === "done"
+                        ? "text-mist hover:bg-ok/[0.05] hover:text-chalk"
+                        : "text-faint hover:bg-bp/[0.05]"
+                    }`}
                   >
-                    <span className="flex h-4 w-4 shrink-0 items-center justify-center border border-line2">
-                      <span className="sr-only">todo</span>
+                    <span
+                      className={`flex h-4 w-4 shrink-0 items-center justify-center border ${
+                        state === "done" ? "border-ok/60 text-ok" : "border-dashed border-line2"
+                      }`}
+                    >
+                      {state === "done" ? <CheckIcon className="h-2.5 w-2.5" /> : null}
                     </span>
-                    {c}
+                    <span className={state === "todo" ? "italic" : ""}>{c}</span>
+                    {state === "todo" ? (
+                      <span className="ml-auto shrink-0 border border-bp/40 bg-bp/10 px-1.5 py-px font-mono text-[9px] tracking-wider text-bp uppercase">
+                        waiting on pipeline
+                      </span>
+                    ) : null}
                   </li>
                 ))}
               </ul>
               <div className="flex items-center justify-between px-5 py-3 font-mono text-[10px] tracking-[0.2em] text-faint uppercase">
-                <span>checker: ______</span>
-                <span>date: on landing</span>
+                <span>checker: bb</span>
+                <span>date: rev b · {new Date().getFullYear()}</span>
               </div>
             </div>
           </Reveal>
