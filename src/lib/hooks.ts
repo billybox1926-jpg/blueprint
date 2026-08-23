@@ -92,6 +92,9 @@ export function useCopy(timeout = 1600): [boolean, (text: string) => void] {
         ta.style.opacity = "0";
         document.body.appendChild(ta);
         ta.select();
+        // DEPRECATED: document.execCommand("copy") is deprecated and only
+        // reached when navigator.clipboard is unavailable (non-secure
+        // contexts). Failure is graceful — the copy state simply resets.
         document.execCommand("copy");
         document.body.removeChild(ta);
         done();

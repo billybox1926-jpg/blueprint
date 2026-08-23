@@ -180,6 +180,15 @@ const LANG_LABEL: Record<Lang, string> = {
   text: "TXT",
 };
 
+/**
+ * Minimal, intentionally line-oriented highlighter for the code viewer.
+ *
+ * KNOWN LIMITATIONS (accepted, by design): this is not a real parser — it
+ * does not handle nested structures, multi-line strings, or escaped quotes
+ * inside strings. The viewer only renders the short, well-behaved templates
+ * from lib/templates/bodies.ts, where line-level tinting is sufficient.
+ * If templates ever grow complex syntax, swap this for Prism.js or Shiki.
+ */
 function tintLine(line: string, lang: Lang): ReactNode {
   const t = line.trim();
   if (t.startsWith("#")) {

@@ -1,4 +1,3 @@
-import { useInView } from "../lib/hooks";
 import { ANATOMY, IMPORTS, MANIFEST, TEST_SUITES } from "../lib/templates";
 import {
   ArrowIcon,
@@ -534,12 +533,16 @@ export function Cli() {
 
 /* ================= QUEUE ================= */
 
+/** fixed stamp year — the stamp marks the v0.1.0 as-built release, not today */
+export const STAMP_YEAR = 2026;
+
 function Stamp() {
-  const [ref, inView] = useInView<HTMLDivElement>();
+  // CSS-only entrance (animation on .stamp-in) — no IntersectionObserver
+  // needed for a single element; the keyframes run when the section mounts.
   return (
-    <div ref={ref} className="flex items-center justify-center py-6">
+    <div className="flex items-center justify-center py-6">
       <div
-        className={`relative border-[3px] border-ok/85 px-10 py-6 text-center ${inView ? "stamp-in" : "opacity-0"}`}
+        className="stamp-in relative border-[3px] border-ok/85 px-10 py-6 text-center"
         style={{ boxShadow: "inset 0 0 0 2px rgba(8,24,43,0.9), inset 0 0 0 3.5px rgba(63,214,143,0.5)" }}
       >
         <div className="font-display text-6xl leading-none font-bold tracking-[0.14em] text-ok uppercase">
@@ -551,7 +554,7 @@ function Stamp() {
           <span className="inline-block h-px w-6 bg-ok/60" />
         </div>
         <div className="mt-1.5 font-mono text-[10px] tracking-[0.2em] text-ok/70 uppercase">
-          billybox · rev b · {new Date().getFullYear()}
+          billybox · rev b · {STAMP_YEAR}
         </div>
       </div>
     </div>
@@ -689,7 +692,7 @@ export function Queue() {
               </ul>
               <div className="flex items-center justify-between px-5 py-3 font-mono text-[10px] tracking-[0.2em] text-faint uppercase">
                 <span>checker: bb</span>
-                <span>date: rev b · {new Date().getFullYear()}</span>
+                <span>date: rev b · {STAMP_YEAR}</span>
               </div>
             </div>
           </Reveal>
