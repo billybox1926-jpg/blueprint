@@ -1,0 +1,89 @@
+name: publish
+
+on:
+  push:
+    tags: ["v*"]
+
+jobs:
+  guard:
+    # Tag-vs-wheel guard: refuse to publish when the pushed tag
+    # does not match __version__ baked into blueprint.py.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Tag <-> module guard
+        run: |
+          set -euo pipefail
+          TAG="${GITHUB_REF_NAME#v}"
+          VER="$(python -c "import blueprint; print(blueprint.__version__)")"
+          echo "tag=v$TAG · module=$VER"
+          test "$TAG" = "$VER" || { echo "::error::v$TAG ≠ $VER — refusing to publish"; exit 1; }
+
+  build:
+    needs: guard
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Build single-module wheel + sdist
+        run: |
+          set -euo pipefail
+          python -m pip install build
+          # minimal PEP 517 build backend on the fly is overkill for a
+          # single file — use hatchling via a generated pyproject.
+          cat > pyproject.toml <<'EOF'
+          [build-system]
+          requires = ["hatchling"]
+          build-backend = "hatchling.build"
+
+          [project]
+          name = "blueprint"
+          version = "0.1.0"
+          description = "BillyBox Project Scaffolder - one command, whole standard"
+          readme = "README.md"
+          authors = [{ name = "Billy Box" }]
+          requires-python = ">=3.10"
+          license = "MIT"
+          keywords = ["billybox", "scaffolder"]
+
+          [project.scripts]
+          blueprint = "blueprint:main"
+
+          [tool.hatch.build.targets.wheel]
+          # single-module wheel: ship blueprint.py directly
+          only-include = ["blueprint.py"]
+          sources = ["blueprint.py" ]
+          EOF
+          echo "pyproject.toml written for packaging"
+          python -c "import tomllib; print(tomllib.load(open('pyproject.toml','rb'))['project']['version'])"
+          python -m build
+
+          # guard again against the actual built artifacts
+          TAG="${GITHUB_REF_NAME#v}"
+          WHL=$(ls dist/*.whl)
+          WHEELVER=$(basename "$WHL" | cut -d- -f2)
+          test "$TAG" = "$WHEELVER" || { echo "::error::wheel $WHEELVER ≠ tag v$TAG"; exit 1; }
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write  # OIDC trusted publishing — no long-lived PyPI tokens
+    environment:
+      name: pypi
+      url: https://pypi.org/p/blueprint/
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+      - uses: pypa/gh-action-pypi-publish@release/v1
