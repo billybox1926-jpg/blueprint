@@ -10,10 +10,14 @@ import io
 import json
 import sys
 import tempfile
-import tomllib
 import unittest
 from contextlib import redirect_stderr, redirect_stdout
 from pathlib import Path
+
+try:
+    import tomllib
+except ModuleNotFoundError:  # Python 3.10
+    import tomli as tomllib  # type: ignore[no-redef]
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
