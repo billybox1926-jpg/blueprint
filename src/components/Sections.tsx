@@ -127,7 +127,7 @@ export function Proof() {
         <SectionHeading
           sheet="Sheet 03"
           kicker="proof of build"
-          title="One file. Sixteen templates. Twenty-two tests."
+          title="One file. Seventeen templates. Twenty-five tests."
           note="The as-built implementation — everything below is what landed, not a promise."
         />
 
@@ -520,7 +520,7 @@ export function Cli() {
               <div className="flex flex-wrap gap-2 font-mono text-[11px]">
                 <span className="border border-line bg-ink px-2 py-1 text-mist">1 verb</span>
                 <span className="border border-line bg-ink px-2 py-1 text-mist">7 flags</span>
-                <span className="border border-line bg-ink px-2 py-1 text-mist">16 templates</span>
+                <span className="border border-line bg-ink px-2 py-1 text-mist">17 templates</span>
                 <span className="border border-line bg-ink px-2 py-1 text-mist">0 dependencies</span>
               </div>
             </div>
@@ -581,7 +581,7 @@ const TIMELINE: {
   },
   {
     name: "blueprint v0.1.0",
-    sub: "single file · 16 templates · 22 tests green on the first run",
+    sub: "single file · 17 templates · 25 tests green on the first run",
     status: "complete",
     tone: "ok",
   },
@@ -594,10 +594,10 @@ const TIMELINE: {
 ];
 
 const DELIVERED: [string, string][] = [
-  ["done", "blueprint.py — single file, 16 templates embedded"],
-  ["done", "tests/test_blueprint.py — 22 tests across 5 suites, green"],
+  ["done", "blueprint.py — single file, 17 templates embedded"],
+  ["done", "tests/test_blueprint.py — 25 tests across 6 suites, green"],
   ["done", ".github/workflows/ci.yml — ruff + mypy + pytest matrix"],
-  ["done", "pyproject.toml — setuptools, blueprint entry point, PyPI metadata"],
+  ["done", "pyproject.toml — hatchling, blueprint entry point, PyPI metadata"],
   ["todo", "publish to PyPI once the pipeline goes live"],
 ];
 
