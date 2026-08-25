@@ -5,6 +5,7 @@ import {
   LICENSES,
   formatBytes,
   normalizePackage,
+  normalizePackageName,
   projectName,
   renderProject,
   type LicenseId,
@@ -49,6 +50,7 @@ function ConfigForm({
 }) {
   const name = projectName(cfg.name);
   const module = normalizePackage(cfg.name);
+  const slug = normalizePackageName(cfg.name);
   const set = (patch: Partial<ProjectConfig>) => onChange({ ...cfg, ...patch });
 
   return (
@@ -75,7 +77,7 @@ function ConfigForm({
 
         <div className="flex flex-wrap gap-2 font-mono text-[11px]">
           <span className="border border-line bg-ink px-2 py-1 text-mist">
-            project <span className="text-bp">{name}</span>
+            project <span className="text-bp">{slug}</span>
           </span>
           <span className="border border-line bg-ink px-2 py-1 text-mist">
             module <span className="text-bp">{module}</span>

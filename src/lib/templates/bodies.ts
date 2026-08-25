@@ -62,7 +62,8 @@ export const T_README = `
 [![ci](https://github.com/billybox/$project_name/actions/workflows/ci.yml/badge.svg)](https://github.com/billybox/$project_name/actions/workflows/ci.yml)
 [![python](https://img.shields.io/pypi/pyversions/$project_name)](https://pypi.org/project/$project_name/)
 [![ruff](https://img.shields.io/badge/lint-ruff-57aeff)](https://docs.astral.sh/ruff/)
-$licenseBadge## Install
+$licenseBadge
+## Install
 
 \`\`\`bash
 pip install $project_name

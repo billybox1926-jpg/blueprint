@@ -65,6 +65,50 @@ describe("projectName", () => {
   });
 });
 
+describe("renderProject matches the Python CLI naming (#41)", () => {
+  // blueprint.py generate_project() puts normalize_package_name(name) into
+  // every {{slug}} slot and slug_to_module(slug) into every {{module}} slot —
+  // never the raw input. The TS renderer must produce identical output.
+  const cases = [
+    ["My Cool Tool", "my-cool-tool", "my_cool_tool"],
+    ["my cool tool", "my-cool-tool", "my_cool_tool"],
+    ["My_Tool", "my-tool", "my_tool"],
+    ["my__project", "my-project", "my_project"],
+    ["7zip helper", "7zip-helper", "_7zip_helper"],
+    ["Wow!! Tool?", "wow-tool", "wow_tool"],
+    ["local drift detector", "local-drift-detector", "local_drift_detector"],
+  ] as const;
+
+  const cfg = (name: string) => ({
+    name,
+    description: "A test project",
+    author: "Billy Box",
+    license: "MIT" as const,
+  });
+
+  for (const [input, slug, mod] of cases) {
+    it(`"${input}" → project_name=${slug}, package_name=${mod}`, () => {
+      const files = renderProject(cfg(input));
+      const pyproject = files.find((f) => f.path === "pyproject.toml")!.content;
+      expect(pyproject).toContain(`name = "${slug}"`);
+      expect(pyproject).toContain(`${mod} = "${mod}.main:main"`);
+      expect(pyproject).toContain(`packages = ["src/${mod}"]`);
+      const readme = files.find((f) => f.path === "README.md")!.content;
+      expect(readme).toContain(`# ${slug}`);
+      const paths = files.map((f) => f.path);
+      expect(paths).toContain(`src/${mod}/__init__.py`);
+    });
+  }
+
+  it("does not leak raw input casing into any rendered file", () => {
+    const files = renderProject(cfg("My Cool Tool"));
+    for (const f of files) {
+      if (f.path === "LICENSE") continue; // copyright line keeps $author
+      expect(f.content).not.toContain("My Cool Tool");
+    }
+  });
+});
+
 describe("formatBytes", () => {
   it("formats bytes under 1 KB", () => {
     expect(formatBytes(512)).toBe("512 B");
