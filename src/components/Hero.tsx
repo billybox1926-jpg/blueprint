@@ -260,8 +260,8 @@ export function Hero() {
               "v0.1.0 · landed",
               "stdlib only · 0 deps",
               "single file: blueprint.py",
-              "python ≥ 3.9",
-              "22 tests · all green",
+              "python ≥ 3.10",
+              "25 tests · all green",
             ].map((c) => (
               <li
                 key={c}
