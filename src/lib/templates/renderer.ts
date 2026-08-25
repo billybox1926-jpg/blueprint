@@ -3,7 +3,7 @@
  * ------------------------------------------------------------------ */
 
 import type { GeneratedFile, Lang, LicenseId, ProjectConfig } from "./types";
-import { normalizePackage, projectName } from "./types";
+import { normalizePackageName, slugToModule } from "./types";
 import {
   T_BB_JSON,
   T_CI,
@@ -44,8 +44,11 @@ function licenseInfo(id: LicenseId): { spdx: string; name: string } {
 export const CANONICAL_VERSION = "0.1.0";
 
 export function renderProject(cfg: ProjectConfig): GeneratedFile[] {
-  const pName = projectName(cfg.name);
-  const pkg = normalizePackage(cfg.name);
+  // The CLI's generate_project() uses the kebab-case slug as the display
+  // name everywhere ({{slug}} in pyproject.toml, README title, badges) —
+  // never the raw user input. Mirror that: project_name is the slug.
+  const pName = normalizePackageName(cfg.name);
+  const pkg = slugToModule(pName);
   const { spdx, name: licName } = licenseInfo(cfg.license);
 
   const year = new Date().getFullYear().toString();
