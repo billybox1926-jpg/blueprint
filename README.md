@@ -1,5 +1,7 @@
 # blueprint
 
+![icon](assets/icon.svg)
+
 [![ci](https://github.com/billybox1926-jpg/blueprint/actions/workflows/ci.yml/badge.svg)](https://github.com/billybox1926-jpg/blueprint/actions/workflows/ci.yml)
 [![python](https://img.shields.io/badge/python-3.10%2B-57aeff)](https://www.python.org/)
 [![license](https://img.shields.io/badge/license-MIT-57aeff)](./LICENSE)
