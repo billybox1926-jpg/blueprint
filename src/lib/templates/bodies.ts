@@ -412,7 +412,6 @@ _TODO - document every flag and exit code._
 ## Configuration
 
 $project_name reads BillyBox wiring from the repo root:
-
 \`bb.json\`, \`policy.json\`, \`routes.json\`, \`commitlog.json\`.
 
 _TODO - document each knob._
