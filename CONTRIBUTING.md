@@ -3,8 +3,8 @@
 ## Local setup
 
 ```bash
-npm install
-npm run dev        # vite dev server on http://localhost:3000
+npm ci             # reproducible install from package-lock.json (Node >= 20)
+npm run dev        # vite dev server (localhost:3000)
 ```
 
 ## Commands
@@ -15,7 +15,8 @@ npm run dev        # vite dev server on http://localhost:3000
 | `npm run build` | production build to `dist/` |
 | `npm run typecheck` | `tsc --noEmit` |
 | `npm test` | vitest unit tests |
-| `npx vitest` | vitest watch mode |
+| `npx vitest` | vitest watch mode (uses the pinned local vitest) |
+| `npm run lint:deps` | depcheck — unused dependency scan (pinned local depcheck) |
 | `python -m unittest discover tests` | CLI test suite (stdlib only) |
 
 ## Project structure

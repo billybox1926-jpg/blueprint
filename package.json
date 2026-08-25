@@ -13,28 +13,32 @@
     "url": "https://github.com/billybox1926-jpg/blueprint/issues"
   },
   "license": "MIT",
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "dev": "vite",
     "build": "vite build",
     "typecheck": "tsc --noEmit",
-    "lint:deps": "npx depcheck --ignores=@tailwindcss/vite,@types/react-dom",
+    "lint:deps": "depcheck --ignores=@tailwindcss/vite,@types/react-dom",
     "format:check": "prettier --check .",
     "test": "vitest run"
   },
   "dependencies": {
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0"
+    "react": "18.3.1",
+    "react-dom": "18.3.1"
   },
   "devDependencies": {
-    "@tailwindcss/vite": "^4.1.7",
-    "@types/node": "^26.2.0",
-    "@types/react": "^18.2.0",
-    "@types/react-dom": "^18.2.0",
-    "@vitejs/plugin-react": "^5.2.0",
-    "prettier": "^3.4.2",
-    "tailwindcss": "^4.1.7",
-    "typescript": "^5.7.0",
-    "vite": "^6.3.5",
-    "vitest": "^4.1.11"
+    "@tailwindcss/vite": "4.3.3",
+    "@types/node": "26.2.0",
+    "@types/react": "18.3.31",
+    "@types/react-dom": "18.3.7",
+    "@vitejs/plugin-react": "5.2.0",
+    "depcheck": "1.4.7",
+    "prettier": "3.9.6",
+    "tailwindcss": "4.3.3",
+    "typescript": "5.9.3",
+    "vite": "6.4.3",
+    "vitest": "4.1.11"
   }
 }
