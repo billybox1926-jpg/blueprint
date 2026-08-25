@@ -1,14 +1,53 @@
 import { describe, expect, it } from "vitest";
-import { formatBytes, normalizePackage, projectName } from "./types";
+import {
+  formatBytes,
+  normalizePackage,
+  normalizePackageName,
+  projectName,
+  slugToModule,
+} from "./types";
 import { renderProject } from "./renderer";
 
-describe("normalizePackage", () => {
-  it("converts hyphens to underscores", () => {
-    expect(normalizePackage("my-tool")).toBe("my_tool");
+describe("normalizePackageName", () => {
+  it("produces a kebab-case slug", () => {
+    expect(normalizePackageName("My Cool Tool")).toBe("my-cool-tool");
   });
 
-  it("lowercases and strips special characters", () => {
-    expect(normalizePackage("My Cool Tool!")).toBe("mycooltool");
+  it("strips punctuation and collapses runs", () => {
+    expect(normalizePackageName("Wow!! Tool?")).toBe("wow-tool");
+  });
+
+  it("falls back on empty input", () => {
+    expect(normalizePackageName("   ")).toBe("my-project");
+    expect(normalizePackageName("***")).toBe("my-project");
+  });
+});
+
+describe("slugToModule", () => {
+  it("converts hyphens to underscores", () => {
+    expect(slugToModule("my-cool-tool")).toBe("my_cool_tool");
+  });
+
+  it("prefixes an underscore when starting with a digit", () => {
+    expect(slugToModule("7zip-helper")).toBe("_7zip_helper");
+  });
+
+  it("falls back on empty input", () => {
+    expect(slugToModule("")).toBe("my_project");
+  });
+});
+
+describe("normalizePackage", () => {
+  it("matches Python: My Cool Tool → my_cool_tool", () => {
+    expect(normalizePackage("My Cool Tool")).toBe("my_cool_tool");
+  });
+
+  it("matches Python: local drift detector → local_drift_detector", () => {
+    expect(normalizePackage("local drift detector")).toBe("local_drift_detector");
+  });
+
+  it("matches Python: my-cool-tool → my_cool_tool", () => {
+    expect(normalizePackage("my-cool-tool")).toBe("my_cool_tool");
   });
 
   it("prefixes an underscore when starting with a digit", () => {

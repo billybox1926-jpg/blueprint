@@ -31,12 +31,36 @@ export function projectName(raw: string): string {
   return raw.trim() || "my-project";
 }
 
-/** normalize_package_name() from blueprint.py */
+/** normalize_package_name() from blueprint.py — kebab-case slug */
+export function normalizePackageName(raw: string): string {
+  const s = (raw.trim() || "my-project").toLowerCase();
+  let out = "";
+  let prevDash = false;
+  for (const ch of s) {
+    if (/[a-z0-9]/.test(ch)) {
+      out += ch;
+      prevDash = false;
+    } else if (!prevDash && out) {
+      out += "-";
+      prevDash = true;
+    }
+  }
+  out = out.replace(/^-+|-+$/g, "");
+  return out || "my-project";
+}
+
+/** slug_to_module() from blueprint.py — kebab-case → snake_case */
+export function slugToModule(slug: string): string {
+  let m = slug.replace(/-/g, "_");
+  if (m && /^\d/.test(m)) {
+    m = "_" + m;
+  }
+  return m || "my_project";
+}
+
+/** normalizePackage() — full pipeline: raw name → snake_case module */
 export function normalizePackage(raw: string): string {
-  let name = projectName(raw).replace(/-/g, "_");
-  name = name.replace(/[^\w]/g, "");
-  if (name && !/^[A-Za-z_]/.test(name)) name = "_" + name;
-  return name.toLowerCase();
+  return slugToModule(normalizePackageName(raw));
 }
 
 export function formatBytes(n: number): string {
