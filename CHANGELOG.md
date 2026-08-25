@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- `package.json`: added `engines.node >= 20` floor (#45) — the lowest version satisfying every installed dependency's own requirement (vitest 4 needs ^20/^22/>=24; @vitejs/plugin-react 5 needs ^20.19/>=22.12).
+- All dependencies pinned to exact versions instead of `^` caret ranges (#45) — `npm ci` now reproduces the maintainer's tree and `npm install` cannot silently bump transitive drift into the lockfile's declared surface.
+- `lint:deps` script runs the pinned local `depcheck` (added as a devDependency) instead of `npx depcheck`, which fetched the latest registry version on every run, bypassing the lockfile (#45).
+
+### Docs
+- README + CONTRIBUTING now instruct contributors to use `npm ci` (not `npm install`) so the committed lockfile stays authoritative (#45).
+
 ### Added
 - Comprehensive README with badge bar, quick start, usage, directory tree, and architecture diagram.
 - `CHANGELOG.md` for tracking breaking changes in template schemas and CLI flags.

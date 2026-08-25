@@ -94,11 +94,15 @@ Every template lives in `blueprint.py` as a plain `str` constant. Rendering is p
 The `src/` directory is a Vite + React + Tailwind demo site that previews exactly what the CLI generates, using the same substitution engine.
 
 ```bash
-npm install
+npm ci             # reproducible install from package-lock.json (Node >= 20)
 npm run dev        # vite dev server on localhost:3000
 npm run build      # production build to dist/
 npm run typecheck  # tsc --noEmit
 ```
+
+Use `npm ci`, not `npm install`: the lockfile is the source of truth for
+reproducible builds, and `npm install` can drift it when newer compatible
+versions exist. All dependencies are pinned to exact versions (#45).
 
 ## Contributing
 
