@@ -75,9 +75,16 @@ def render_template(tpl: str, ctx: dict[str, str]) -> str:
     out = tpl
     for key, value in ctx.items():
         out = out.replace("{{" + key + "}}", value)
-    # any leftover placeholders resolve to "" — same as the web renderer
+    # any leftover placeholders resolve to "" — same as the web renderer.
+    # Skip ${{ ... }}: those are literal GitHub Actions expressions, not
+    # template placeholders.
     while "{{" in out:
         start = out.index("{{")
+        if start > 0 and out[start - 1] == "$":
+            nxt = out.find("{{", start + 2)
+            if nxt == -1:
+                break
+            start = nxt
         end = out.find("}}", start)
         if end == -1:
             break
@@ -417,6 +424,7 @@ __version__ = "0.1.0"
 '''
 
 T_MAIN_PY = '''\
+#!/usr/bin/env python3
 """{{description}}
 
 CLI entry point - wired by blueprint v0.1.0.
@@ -425,18 +433,18 @@ from __future__ import annotations
 
 import argparse
 
-from {module} import __version__
+from {{module}} import __version__
 
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        prog="{module}",
-        description="{description}",
+        prog="{{module}}",
+        description="{{description}}",
     )
     parser.add_argument(
         "--version",
         action="version",
-        version=f"%(prog)s {{__version__}}",
+        version=f"%(prog)s {__version__}",
     )
     return parser
 
@@ -444,13 +452,13 @@ def build_parser() -> argparse.ArgumentParser:
 def main(argv: list[str] | None = None) -> int:
     parser = build_parser()
     parser.parse_args(argv)
-    print("{slug} is wired and waiting - implement me.")
+    print("{{slug}} is wired and waiting - implement me.")
     return 0
 
 
 if __name__ == "__main__":
     raise SystemExit(main())
-'''.replace("{module}", "{{module}}").replace("{description}", "{{description}}").replace("{slug}", "{{slug}}")
+'''
 
 T_TEST_MAIN = """\
 from {{module}} import __version__

@@ -202,3 +202,23 @@ class TestCLIIntegration(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestTemplateEngineParity(unittest.TestCase):
+    """#42: render_template must preserve literal GitHub Actions ${{ ... }}."""
+
+    def test_actions_expression_survives_render(self) -> None:
+        tpl = "python-version: ${{ matrix.python-version }}" + "\n"
+        self.assertEqual(
+            blueprint.render_template(tpl, {}),
+            "python-version: ${{ matrix.python-version }}" + "\n",
+        )
+
+    def test_main_py_fully_substituted(self) -> None:
+        files = blueprint.generate_project("My Cool Tool", description="d", author="a")
+        main = files["src/my_cool_tool/main.py"]
+        self.assertTrue(main.startswith("#!/usr/bin/env python3" + "\n"))
+        self.assertNotIn("{module}", main)
+        self.assertNotIn("{slug}", main)
+        self.assertIn('version=f"%(prog)s {__version__}"', main)
+        self.assertIn('print("my-cool-tool is wired', main)
