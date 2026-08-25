@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useReducedMotion, useScramble } from "../lib/hooks";
 import { ReplayIcon } from "./ui";
+import { CANONICAL_VERSION } from "../lib/templates";
 
 /* ---------------- terminal script — replays the shipped CLI ---------------- */
 
@@ -105,7 +106,7 @@ function Terminal() {
           <span className="h-2.5 w-2.5 bg-warn/80" />
           <span className="h-2.5 w-2.5 bg-ok/80" />
           <span className="ml-3 truncate font-mono text-[11px] text-faint">
-            billybox@bb — ~/work · blueprint v0.1.0
+            billybox@bb — ~/work · blueprint v{CANONICAL_VERSION}
           </span>
           <span className="ml-auto border border-ok/40 bg-ok/10 px-1.5 py-px font-mono text-[10px] text-ok">
             shipped
@@ -175,7 +176,7 @@ function Terminal() {
           replay run
         </button>
         <p className="font-mono text-[11px] text-faint">
-          that's the shipped v0.1.0 flow — the lab below renders its{" "}
+          that's the shipped v{CANONICAL_VERSION} flow — the lab below renders its{" "}
           <span className="text-mist">actual templates</span>
         </p>
       </div>
@@ -231,7 +232,7 @@ export function Hero() {
                 Shipped
               </div>
               <div className="mt-0.5 font-mono text-[9px] tracking-[0.2em] text-ok/80 uppercase">
-                v0.1.0 · as-built
+                v{CANONICAL_VERSION} · as-built
               </div>
             </div>
           </div>
@@ -251,7 +252,7 @@ export function Hero() {
             Every BillyBox repo starts the same way: pyproject, publish pipeline with the
             tag-vs-version guard, CI matrix, pre-commit, suite wiring.{" "}
             <span className="text-chalk">blueprint</span> stamps out the whole standard in one
-            command — v0.1.0 has landed, tested, and ready for its PyPI tag.
+            command — v{CANONICAL_VERSION} has landed, tested, and ready for its PyPI tag.
           </p>
 
           <ul className="mt-7 flex flex-wrap gap-2">

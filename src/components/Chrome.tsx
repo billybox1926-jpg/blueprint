@@ -1,4 +1,5 @@
 import { BlueprintMark } from "./ui";
+import { CANONICAL_VERSION } from "../lib/templates";
 
 /* ---------------- ambient background ---------------- */
 
@@ -61,7 +62,7 @@ export function TopBar() {
             SHIPPED
           </span>
           <span className="border border-line bg-panel px-2 py-1 font-mono text-[10px] text-mist">
-            v0.1.0
+            v{CANONICAL_VERSION}
           </span>
         </div>
       </div>

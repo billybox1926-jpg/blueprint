@@ -9,6 +9,7 @@ import {
   T_CI,
   T_COMMITLOG,
   T_CTXIGNORE,
+  T_DOCS_INDEX,
   T_GITIGNORE,
   T_INIT,
   T_LICENSE_APACHE,
@@ -24,7 +25,7 @@ import {
 } from "./bodies";
 
 const TOKENS =
-  /\$(project_name|package_name|description|author|license_spdx|license_name)/g;
+  /\$(project_name|package_name|description|author|license_spdx|license_name|year|iso|licenseLine|licenseBadge|version)/g;
 
 function substitute(tpl: string, vars: Record<string, string>): string {
   return tpl.replace(TOKENS, (_, k: string) => vars[k] ?? "");
@@ -40,10 +41,18 @@ function licenseInfo(id: LicenseId): { spdx: string; name: string } {
   return { spdx: "NONE", name: "No License" };
 }
 
+export const CANONICAL_VERSION = "0.1.0";
+
 export function renderProject(cfg: ProjectConfig): GeneratedFile[] {
   const pName = projectName(cfg.name);
   const pkg = normalizePackage(cfg.name);
   const { spdx, name: licName } = licenseInfo(cfg.license);
+
+  const year = new Date().getFullYear().toString();
+  const iso = `${year}-01-01T00:00:00Z`;
+
+  const licenseLine = cfg.license === "none" ? "" : `license = "${cfg.license}"\n`;
+  const licenseBadge = cfg.license === "none" ? "" : `[![license](https://img.shields.io/pypi/l/${pName})](./LICENSE)\n`;
 
   const vars: Record<string, string> = {
     project_name: pName,
@@ -52,6 +61,11 @@ export function renderProject(cfg: ProjectConfig): GeneratedFile[] {
     author: cfg.author || "Unknown",
     license_spdx: spdx,
     license_name: licName,
+    year,
+    iso,
+    licenseLine,
+    licenseBadge,
+    version: CANONICAL_VERSION,
   };
 
   const mk = (path: string, lang: Lang, tpl: string): GeneratedFile => {
@@ -69,6 +83,7 @@ export function renderProject(cfg: ProjectConfig): GeneratedFile[] {
     mk(`src/${pkg}/__init__.py`, "python", T_INIT),
     mk(`src/${pkg}/main.py`, "python", T_MAIN),
     mk("tests/test_main.py", "python", T_TEST),
+    mk("docs/index.md", "markdown", T_DOCS_INDEX),
     mk("bb.json", "json", T_BB_JSON),
     mk(".ctxignore", "text", T_CTXIGNORE),
     mk("policy.json", "json", T_POLICY),

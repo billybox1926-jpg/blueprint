@@ -18,7 +18,7 @@ export const FILE_NOTES: Record<string, string> = {
   LICENSE: "full text embedded — MIT or Apache-2.0",
   ".gitignore": "python + packaging + venv + IDE + OS",
   ".pre-commit-config.yaml": "ruff + mypy + housekeeping hooks",
-  "ci.yml": "matrix 3.9 → 3.12 · ruff · mypy · pytest",
+  "ci.yml": "matrix 3.10 → 3.13 · quality job (ruff + mypy) · test job (pytest whole tree)",
   "publish.yml": "tag-vs-version guard · OIDC id-token: write",
   "__init__.py": "docstring + __version__, single source of truth",
   "main.py": "argparse entry point wired via [project.scripts]",

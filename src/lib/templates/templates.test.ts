@@ -83,9 +83,9 @@ describe("renderProject", () => {
     license: "MIT" as const,
   };
 
-  it("renders 15 files for MIT (14 common + LICENSE)", () => {
+  it("renders 16 files for MIT (15 common + LICENSE)", () => {
     const files = renderProject(cfg);
-    expect(files).toHaveLength(15);
+    expect(files).toHaveLength(16);
   });
 
   it("omits LICENSE when license is none", () => {
