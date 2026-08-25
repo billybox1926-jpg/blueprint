@@ -10,18 +10,28 @@ venv/
 .env
 .env.*
 
+# --- python ---
+__pycache__/
+*.py[cod]
+*.egg-info/
+wheels/
+
 # --- tooling caches ---
 .mypy_cache/
 .pytest_cache/
 .ruff_cache/
 .coverage
 htmlcov/
-__pycache__/
-*.py[cod]
-*.egg-info/
 
 # --- os / editor ---
 .DS_Store
 Thumbs.db
 .idea/
 .vscode/
+*.swp
+*.swo
+*~
+
+# --- windows ---
+ehthumbs.db
+Desktop.ini

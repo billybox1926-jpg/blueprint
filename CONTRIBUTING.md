@@ -40,3 +40,51 @@ Checklist for a new component:
 Unit tests live next to the code as `*.test.ts` and run under `vitest`
 (`src/lib/templates/templates.test.ts` covers the pure template functions).
 The Python CLI suite is stdlib-only unittest — keep it that way.
+
+## How to Add a New Template Flavor
+
+A "template flavor" is a new set of files that `blueprint.py` can generate. Here's how to add one:
+
+1. **Add the template constant** in `blueprint.py` following the existing pattern:
+   ```python
+   T_NEW_FILE = """\
+   content with {{slug}} and {{module}} placeholders
+   """
+   ```
+
+2. **Register it in the `TEMPLATES` dict** (around line 587):
+   ```python
+   TEMPLATES: dict[str, str] = {
+       ...
+       "new-file.txt": T_NEW_FILE,
+   }
+   ```
+
+3. **Add it to `generate_project()`** (around line 654) so it's included in the output files dict.
+
+4. **Mirror the template in `src/lib/templates.ts`** so the marketing site preview stays in sync.
+
+5. **Add tests** in `tests/test_blueprint.py` covering:
+   - The new file is present in generated output.
+   - Placeholders are correctly substituted.
+   - Edge cases (empty name, special characters, etc.).
+
+6. **Update the README** directory tree and this guide if the new flavor changes the generated project structure.
+
+## Code Style
+
+- Python: ruff + mypy --strict (enforced by pre-commit).
+- TypeScript: tsc --noEmit (enforced by `npm run typecheck`).
+- All templates use `{{variable}}` substitution — no f-strings, no `.format()`.
+
+## Pull Request Process
+
+1. Fork the repo and create a feature branch.
+2. Make your changes and add tests.
+3. Run the full test suite and confirm all tests pass.
+4. Update `CHANGELOG.md` under `[Unreleased]`.
+5. Submit a PR with a clear description of what changed and why.
+
+## Code of Conduct
+
+Be respectful, constructive, and direct. This is a solo-builder project — contributions should keep the tool lightweight and dependency-free.
