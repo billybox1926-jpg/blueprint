@@ -365,15 +365,15 @@ export function Scope() {
                   full dependency audit
                 </p>
                 <p className="mt-3 font-mono text-[13px] leading-relaxed text-chalk">
-                  <span className="text-bp">import</span> argparse, json, os, re, sys
+                  <span className="text-bp">import</span> argparse, json, sys
                   <br />
+                  <span className="text-bp">from</span> datetime{" "}
+                  <span className="text-bp">import</span> datetime, timezone ·{" "}
                   <span className="text-bp">from</span> pathlib{" "}
-                  <span className="text-bp">import</span> Path ·{" "}
-                  <span className="text-bp">from</span> string{" "}
-                  <span className="text-bp">import</span> Template
+                  <span className="text-bp">import</span> Path
                 </p>
                 <p className="mt-2 font-mono text-[11px] text-faint">
-                  …that's the entire bill of materials. Everything else is string substitution.
+                  …that's the entire bill of materials. Everything else is str.replace().
                 </p>
               </div>
             </div>
