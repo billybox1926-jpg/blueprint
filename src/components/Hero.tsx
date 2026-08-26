@@ -30,7 +30,7 @@ const SCRIPT: TermLine[] = [
   { kind: "ok", a: "choose license [1]", b: "1" },
   { kind: "gap", a: "" },
   { kind: "done", a: "Created project 'local-drift' in local-drift" },
-  { kind: "info", a: "  15 files generated" },
+  { kind: "info", a: "  16 files generated" },
   { kind: "gap", a: "" },
   { kind: "info", a: "Next steps:" },
   { kind: "info", a: "  cd local-drift" },
@@ -241,7 +241,7 @@ export function Hero() {
             <span className="h-2.5 w-px bg-bp/60" />
             <span className="h-px flex-1 bg-bp/40" />
             <span className="font-mono text-[10px] tracking-[0.18em] text-bp/90 uppercase">
-              1 command → 15 files
+              1 command → 16 files
             </span>
             <span className="h-px flex-1 bg-bp/40" />
             <span className="h-2.5 w-px bg-bp/60" />
